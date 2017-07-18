@@ -100,7 +100,7 @@ pipeline {
             steps {
                 
                 // Build the kit and msi
-                bat "${SOURCE_ROOT}/../buildScripts/kit.bat"
+                bat "${SOURCE_ROOT}/../buildScripts/package.bat"
                     
             }
         }
