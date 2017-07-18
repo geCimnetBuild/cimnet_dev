@@ -24,7 +24,7 @@ pipeline {
    }
     
     stages {
-        
+
        stage ("Fetch") {
             steps {
                 
@@ -112,6 +112,7 @@ pipeline {
                 thresholds: [[$class: 'FailedThreshold', unstableThreshold: '1']],
                 tools: [[$class: 'JUnitType', pattern: '**/surefire-reports/*.xml'],
                         [$class: 'JUnitType', pattern: '**/generatedJUnitFiles/JUnit/*.xml'],
+                        [$class: 'BoostTestJunitHudsonTestType', pattern: '**/*_results.xml'],
                          ]])
         }
         failure {
