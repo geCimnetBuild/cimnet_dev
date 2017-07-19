@@ -1,0 +1,126 @@
+pipeline {
+    
+    agent {label 'w16bld-cimnet01'}
+    
+    environment {
+        VS_ROOT = 'C:\\Program Files (x86)\\Microsoft Visual Studio 14.0'
+        BOOST_ROOT = 'D:\\boost_1_63_0'
+        XERCES_ROOT = 'D:\\xerces-c-3.1.3'
+        CMAKE_ROOT = 'C:\\Program Files (x86)\\CMake'
+        SOURCE_ROOT = 'D:\\JBld\\workspace\\CIMNet\\Build_Main\\vs2015\\NMM_DEV\\src'
+        NMM_ROOT = 'D:\\opt\\nmm_Windows_x64_vc140'
+        M2_ROOT = 'C:\\opt\\apache-maven-3.2.5'
+        NODEJS_ROOT = 'D:\\nodejs'
+        WIX_ROOT = 'C:\\Program Files (x86)\\WiX Toolset v3.11'
+        VERSION = VersionNumber([projectStartDate: '', versionNumberString: '${BUILD_YEAR}${BUILD_MONTH, XX}${BUILD_DAY, XX}_${BUILDS_TODAY, XX}', versionPrefix: ''])
+    }
+
+
+   options {
+
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '5'))   
+
+   }
+    
+    stages {
+
+       stage ("Fetch") {
+            steps {
+                
+                script {
+	                def versionNumber = "${VERSION}"
+	                currentBuild.displayName = versionNumber          
+	            }
+	            
+	            // temporary fix for possible orphaned cimnet process after running integration tests
+                bat """
+                    
+                    tasklist /fi "imagename eq cimnet_network_commands.exe" |find ":" > nul
+                    if errorlevel 1 taskkill /f /im "cimnet_network_commands.exe"
+                
+                    """
+                
+                // clear source dir
+                bat """ 
+                    rm -rf *
+                
+                    """
+                
+                // Get source code from the fetch project
+                step ([$class: 'CopyArtifact',
+                projectName: 'Fetch',
+                filter: 'nmm_dev.zip']);
+                
+                // unzip source in workspace
+                bat """
+                    
+                    @ECHO ON
+                    mkdir NMM_DEV
+                    move nmm_dev.zip NMM_DEV
+                    cd NMM_DEV
+                    unzip -o -qq nmm_*.zip
+                    rm -f nmm_*.zip
+                    attrib -r /s . > nul
+                    chmod -R ugo+rw . > nul
+                    ls
+                
+                    """
+            }
+            
+        }
+        
+        stage ('CMAKE') {
+            steps {
+                
+                // build solutions and generate code
+                bat "${SOURCE_ROOT}/../buildScripts/cmake.bat"
+                    
+            }
+        }
+        
+        stage ('C++ Build') {
+            steps {
+                // C++ build and unit tests
+                bat "${SOURCE_ROOT}/../buildScripts/cppBuild.bat"
+            }
+        }
+        
+        stage ('Java Build') {
+            steps {
+                    
+                // Maven build and ui packageing 
+                bat "${SOURCE_ROOT}/../buildScripts/javaBuild.bat"
+
+                    
+            }
+        }
+        
+        stage ('Package') {
+            steps {
+                
+                // Build the kit and msi
+                bat "${SOURCE_ROOT}/../buildScripts/package.bat"
+                    
+            }
+        }
+   }
+   
+   post {
+        always {
+            step([$class: 'XUnitBuilder',
+                thresholds: [[$class: 'FailedThreshold', unstableThreshold: '1']],
+                tools: [[$class: 'JUnitType', pattern: '**/surefire-reports/*.xml'],
+                        [$class: 'JUnitType', pattern: '**/generatedJUnitFiles/JUnit/*.xml'],
+                        [$class: 'BoostTestJunitHudsonTestType', pattern: '**/*_results.xml'],
+                         ]])
+        }
+        failure {
+            emailext(body: '${JELLY_SCRIPT,template="ci_build_html"}', 
+                subject: 'CIMNet Build Failure',
+                to: 'matthew.hempleman@ge.com')   
+
+        }
+
+   }
+}
