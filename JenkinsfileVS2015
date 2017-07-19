@@ -49,7 +49,7 @@ pipeline {
                 bat """
                     
                     @ECHO ON
-                    mkdir NMM_DEV
+                    if not exists NMM_DEV mkdir NMM_DEV
                     move nmm_dev.zip NMM_DEV
                     cd NMM_DEV
                     unzip -o -qq nmm_*.zip
