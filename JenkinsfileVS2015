@@ -32,14 +32,6 @@ pipeline {
 	                def versionNumber = "${VERSION}"
 	                currentBuild.displayName = versionNumber          
 	            }
-	            
-	            // temporary fix for possible orphaned cimnet process after running integration tests
-                bat """
-                    
-                    tasklist /fi "imagename eq cimnet_network_commands.exe" |find ":" > nul
-                    if errorlevel 1 taskkill /f /im "cimnet_network_commands.exe"
-                
-                    """
                 
                 // clear source dir
                 bat """ 
@@ -92,6 +84,13 @@ pipeline {
                 // Maven build and ui packageing 
                 bat "${SOURCE_ROOT}/../buildScripts/javaBuild.bat"
 
+				// temporary fix for possible orphaned cimnet process after running integration tests
+                bat """
+                    
+                    tasklist /fi "imagename eq cimnet_network_commands.exe" |find ":" > nul
+                    if errorlevel 1 taskkill /f /im "cimnet_network_commands.exe"
+                
+                    """
                     
             }
         }
