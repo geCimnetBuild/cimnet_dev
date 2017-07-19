@@ -34,7 +34,8 @@ pipeline {
 	            }
                 
                 // clear source dir
-                bat """ 
+                bat """
+					cd NMM_DEV
                     rm -rf *
                 
                     """
