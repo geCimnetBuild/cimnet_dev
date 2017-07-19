@@ -1,0 +1,114 @@
+pipeline {
+    
+    agent {label 'l7bld-cimnet01'}
+    
+    environment {
+        CMAKE_C_COMPILER = 'gcc'
+        CMAKE_CXX_COMPILER = 'g++'
+        NMM_ROOT = '/opt/NMM_gcc48'
+        BOOST_ROOT = '/opt/boost_1_61_0_Linux_x64_gcc48'
+        XERCES_ROOT = '/opt/xerces-c-3.1.4_Linux_x64_gcc48'
+        THRIFT_ROOT = '/opt/thrift-0.9.3'
+        NODEJS_ROOT = '/opt/node-v6.11.1-linux-x64'
+        M2_ROOT = '/opt/apache-maven-3.3.1'
+        SOURCE_ROOT = '/u02/JBld/workspace/CIMNet/Build_Main/gcc48_lx64/src'
+        VERSION = VersionNumber([projectStartDate: '', versionNumberString: '${BUILD_YEAR}${BUILD_MONTH, XX}${BUILD_DAY, XX}_${BUILDS_TODAY, XX}', versionPrefix: ''])
+    }
+
+
+   options {
+
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '5'))   
+
+   }
+    
+    stages {
+        
+        stage ("Fetch") {
+            steps {
+                
+                script {
+	                def versionNumber = "${VERSION}"
+	                currentBuild.displayName = versionNumber          
+	            }
+	            
+	            sh  """
+	                
+                    touch a
+                    chmod -R ugo+rw *
+                    rm -rf '$WORKSPACE/'
+                    mkdir $WORKSPACE
+                    [ "$VERSION" = "" ] || export PIPELINE_VERSION=current
+	            
+	                """
+                
+                step ([$class: 'CopyArtifact',
+                        projectName: 'Fetch',
+                        filter: 'nmm_dev.zip']);
+                
+                // unzip source update permissions 
+                sh  """
+                    
+                    unzip -a -o -qq nmm_*.zip
+                    chmod -R ugo+rw *
+                    cd buildScripts
+                    chmod +x *
+                
+                    """
+                
+                // update executable bit on Habitat tools and build scripts
+                sh  """
+                    
+                    #!/bin/bash -x
+                    echo -- set executable bit on Habitat tools
+                    chmod +x '$WORKSPACE/src/network_kernel/nmm_cimnet/habcorelite/habitat_sdk/bin/libbz2.dll'
+                    chmod +x '$WORKSPACE/src/network_kernel/nmm_cimnet/habcorelite/habitat_sdk/bin/parse_message.py'
+                    chmod +x '$WORKSPACE/src/cimcpp/CimCpp/../../../tools/ecore2cimcpp/linux.gtk.x86_64/eclipse/ecore2cpp'
+                    exit 0
+                
+                    """
+                
+                
+            }
+            
+        }
+        
+        stage ('CMAKE') {
+            steps {
+                    
+                sh " ${WORKSPACE}/buildScripts/cmake.sh"
+                    
+            }
+        }
+        
+        stage ('C++ Build') {
+            steps {
+                sh " ${WORKSPACE}/buildScripts/cppBuild.sh"
+            }
+        }
+        
+        stage ('Java Build') {
+            steps {
+
+                sh " ${WORKSPACE}/buildScripts/javaBuild.sh" 
+            }
+        }
+        
+        stage ('Package') {
+            steps {
+                sh " ${WORKSPACE}/buildScripts/package.sh" 
+                }
+            }
+        }
+   
+   post {
+        failure {
+            emailext(body: '${JELLY_SCRIPT,template="ci_build_html"}', 
+                subject: 'CIMNet Build Failure',
+                to: 'matthew.hempleman@ge.com')   
+
+        }
+
+   }
+}
