@@ -35,7 +35,7 @@ pipeline {
                 
                 // clear source dir
                 bat """
-					if exists NMM_DEV rm -rf /NMM_DEV
+					if exist NMM_DEV rm -rf /NMM_DEV
                 
                     """
                 
@@ -48,7 +48,7 @@ pipeline {
                 bat """
                     
                     @ECHO ON
-                    if not exists NMM_DEV mkdir NMM_DEV
+                    if not exist NMM_DEV mkdir NMM_DEV
                     move nmm_dev.zip NMM_DEV
                     cd NMM_DEV
                     unzip -o -qq nmm_*.zip
