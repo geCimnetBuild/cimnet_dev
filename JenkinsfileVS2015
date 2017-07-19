@@ -35,8 +35,7 @@ pipeline {
                 
                 // clear source dir
                 bat """
-					cd NMM_DEV
-                    rm -rf *
+					if exists NMM_DEV rm -rf /NMM_DEV
                 
                     """
                 
