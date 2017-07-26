@@ -36,7 +36,7 @@ pipeline {
 	            sh  """
 	                
                     touch a
-                    chmod -R ugo+rw $PWD
+                    chmod -R ugo+rw $WORKSPACE
                     rm -rf '$WORKSPACE/'
                     mkdir $WORKSPACE
                     [ "$VERSION" = "" ] || export PIPELINE_VERSION=current
