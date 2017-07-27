@@ -35,7 +35,8 @@ pipeline {
                 
                 // clear source dir
                 bat """
-					if exist NMM_DEV rm -rf /NMM_DEV
+			if exist NMM_DEV rm -rf /NMM_DEV
+			if exist generatedJUnitFiles rm -rf /generatedJUnitFiles
                 
                     """
                 
