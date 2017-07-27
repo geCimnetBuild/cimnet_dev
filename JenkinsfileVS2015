@@ -34,11 +34,13 @@ pipeline {
 	            }
                 
                 // clear source dir
-                bat """
+               /* bat """
 			if exist NMM_DEV rm -rf /NMM_DEV
 			if exist generatedJUnitFiles rm -rf /generatedJUnitFiles
                 
-                    """
+                    """ */
+		deleteDir()
+
                 
                 // Get source code from the fetch project
                 step ([$class: 'CopyArtifact',
