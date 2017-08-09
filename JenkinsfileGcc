@@ -103,6 +103,11 @@ pipeline {
         }
    
    post {
+   	unstable {
+  	    emailext(body: '${JELLY_SCRIPT,template="ci_build_html"}', 
+                subject: 'CIMNet Build Unstable',
+                to: 'matthew.hempleman@ge.com,tory.mckeag@ge.com,ashok.pitchapati@ge.com,siva.k-r@ge.com,alec.britton@ge.com,yang.zheng1@ge.com,leon.wang@ge.com')
+ 	}
         failure {
             emailext(body: '${JELLY_SCRIPT,template="ci_build_html"}', 
                 subject: 'CIMNet Build Failure',
