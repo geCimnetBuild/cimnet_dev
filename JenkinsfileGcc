@@ -64,7 +64,6 @@ pipeline {
                     echo -- set executable bit on Habitat tools
                     chmod +x '$WORKSPACE/src/network_kernel/nmm_cimnet/habcorelite/habitat_sdk/bin/libbz2.dll'
                     chmod +x '$WORKSPACE/src/network_kernel/nmm_cimnet/habcorelite/habitat_sdk/bin/parse_message.py'
-                    chmod +x '$WORKSPACE/src/cimcpp/CimCpp/../../../tools/ecore2cimcpp/linux.gtk.x86_64/eclipse/ecore2cpp'
                     exit 0
                 
                     """
